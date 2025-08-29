@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR Minimal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>QR Code Generator</h1>
+      <p style="margin-left:auto;">Instant QR from text/URL</p>
+    </div>
+
+    <div class="controls">
+      <input id="text" placeholder="Enter text">
+      <button id="gen">Generate</button>
+      <button id="download" disabled>Download PNG</button>
+    </div>
+    <!-- New color controls -->
+    <div class="controls">
+      <div style="display:flex; gap:12px;">
+        <label style="display:flex; align-items:center; gap:8px;">
+          Foreground
+          <input type="color" id="fgColor" value="#000000" />
+        </label>
+        <label style="display:flex; align-items:center; gap:8px;">
+          Background
+          <input type="color" id="bgColor" value="#ffffff" />
+        </label>
+      </div>
+      <div></div>
+    </div>
+
+    <div id="qrcode"></div>
+    <div class="footer">Tip: keep URLs short for denser scannability.</div>
+  </div>
+
+  <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+  const input = document.getElementById('text');
+  const btnGen = document.getElementById('gen');
+  const btnDl = document.getElementById('download');
+  const wrap = document.getElementById('qrcode');
+  const fg = document.getElementById('fgColor');
+  const bg = document.getElementById('bgColor');
+
+  function make() {
+    wrap.innerHTML = '';
+    new QRCode(wrap, {
+      text: input.value.trim() || 'https://example.com',
+      width: 256, height: 256,
+      colorDark: fg.value, colorLight: bg.value,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    // Slight delay to allow DOM to insert canvas/img
+    setTimeout(() => { btnDl.disabled = false; }, 50);
+  }
+
+  function downloadPNG() {
+    // Prefer canvas if present (cleaner export)
+    const canvas = wrap.querySelector('canvas');
+    let dataURL = null;
+    if (canvas) {
+      dataURL = canvas.toDataURL('image/png');
+    } else {
+      const img = wrap.querySelector('img');
+      if (img && img.src.startsWith('data:image')) dataURL = img.src;
+    }
+    if (!dataURL) { alert('Generate a QR first.'); return; }
+
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = 'qr_' + Date.now() + '.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  btnGen.addEventListener('click', make);
+  btnDl.addEventListener('click', downloadPNG);
+  make();
+</script>
+
+</body>
+</html>
