@@ -1,86 +1,102 @@
 <!doctype html>
-<html>
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QR Minimal</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QR Code Generator</title>
+  <meta name="description" content="Generate customizable QR codes from text or URLs. Choose colors, size, and error correction; download as PNG." />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>QR Code Generator</h1>
-      <p style="margin-left:auto;">Instant QR from text/URL</p>
-    </div>
+  <header class="app-header">
+    <h1>QR Code Generator</h1>
+    <button id="theme-toggle" aria-label="Toggle theme">🌓</button>
+  </header>
 
-    <div class="controls">
-      <input id="text" placeholder="Enter text">
-      <button id="gen">Generate</button>
-      <button id="download" disabled>Download PNG</button>
-    </div>
-    <!-- New color controls -->
-    <div class="controls">
-      <div style="display:flex; gap:12px;">
-        <label style="display:flex; align-items:center; gap:8px;">
-          Foreground
-          <input type="color" id="fgColor" value="#000000" />
+  <main class="app-main">
+    <section class="controls">
+      <label>
+        Enter text or URL
+        <input type="text" id="qr-input" placeholder="https://example.com" />
+      </label>
+
+      <label>
+        Size
+        <input type="number" id="qr-size" min="100" max="500" value="250" />
+      </label>
+
+      <div class="color">
+        <label>
+          Color
+          <input type="color" id="qr-color" value="#069494" />
         </label>
-        <label style="display:flex; align-items:center; gap:8px;">
+
+        <label>
           Background
-          <input type="color" id="bgColor" value="#ffffff" />
+          <input type="color" id="qr-bg" value="#ffffff" />
         </label>
       </div>
-      <div></div>
-    </div>
 
-    <div id="qrcode"></div>
-    <div class="footer">Tip: keep URLs short for denser scannability.</div>
-  </div>
+      <button id="generate">Generate QR</button>
+    </section>
 
-  <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <section class="preview">
+      <div id="qr-code"></div>
+      <button id="download" disabled>Download PNG</button>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Made By <strong>Yug Patel</strong></p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  const input = document.getElementById('text');
-  const btnGen = document.getElementById('gen');
-  const btnDl = document.getElementById('download');
-  const wrap = document.getElementById('qrcode');
-  const fg = document.getElementById('fgColor');
-  const bg = document.getElementById('bgColor');
+  const input = document.getElementById("qr-input");
+  const sizeInput = document.getElementById("qr-size");
+  const colorInput = document.getElementById("qr-color");
+  const bgInput = document.getElementById("qr-bg");
+  const qrContainer = document.getElementById("qr-code");
+  const generateBtn = document.getElementById("generate");
+  const downloadBtn = document.getElementById("download");
+  const themeToggle = document.getElementById("theme-toggle");
 
-  function make() {
-    wrap.innerHTML = '';
-    new QRCode(wrap, {
-      text: input.value.trim() || 'https://example.com',
-      width: 256, height: 256,
-      colorDark: fg.value, colorLight: bg.value,
-      correctLevel: QRCode.CorrectLevel.M
+  generateBtn.addEventListener("click", () => {
+    const text = input.value.trim();
+    if (!text) return alert("Please enter text or URL");
+
+    qrContainer.innerHTML = "";
+
+    // Create a canvas and append it
+    const canvas = document.createElement("canvas");
+    qrContainer.appendChild(canvas);
+
+    // Generate QR with colors
+    QRCode.toCanvas(canvas, text, {
+      width: parseInt(sizeInput.value),
+      color: {
+        dark: colorInput.value,   // foreground color
+        light: bgInput.value      // background color
+      }
+    }, (err) => {
+      if (err) return console.error(err);
+      downloadBtn.disabled = false;
     });
-    // Slight delay to allow DOM to insert canvas/img
-    setTimeout(() => { btnDl.disabled = false; }, 50);
-  }
+  });
 
-  function downloadPNG() {
-    // Prefer canvas if present (cleaner export)
-    const canvas = wrap.querySelector('canvas');
-    let dataURL = null;
-    if (canvas) {
-      dataURL = canvas.toDataURL('image/png');
-    } else {
-      const img = wrap.querySelector('img');
-      if (img && img.src.startsWith('data:image')) dataURL = img.src;
-    }
-    if (!dataURL) { alert('Generate a QR first.'); return; }
+  downloadBtn.addEventListener("click", () => {
+    const canvas = qrContainer.querySelector("canvas");
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = "qr-code.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  });
 
-    const a = document.createElement('a');
-    a.href = dataURL;
-    a.download = 'qr_' + Date.now() + '.png';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
-
-  btnGen.addEventListener('click', make);
-  btnDl.addEventListener('click', downloadPNG);
-  make();
+  themeToggle.addEventListener("click", () => {
+    document.documentElement.dataset.theme =
+      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  });
 </script>
 
 </body>
