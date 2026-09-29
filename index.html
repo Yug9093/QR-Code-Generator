@@ -25,6 +25,16 @@
         <input type="number" id="qr-size" min="100" max="500" value="250" />
       </label>
 
+      <div class="templates-section">
+        <label>Select Template</label>
+        <div class="template-selector" id="template-selector">
+          <button class="template-btn active" data-template="classic">Classic</button>
+          <button class="template-btn" data-template="rounded">Rounded</button>
+          <button class="template-btn" data-template="dots">Dots</button>
+          <button class="template-btn" data-template="classy">Classy</button>
+        </div>
+      </div>
+
       <div class="color">
         <label>
           Color
@@ -50,7 +60,7 @@
     <p>Made By <strong>Yug Patel</strong></p>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 <script>
   const input = document.getElementById("qr-input");
   const sizeInput = document.getElementById("qr-size");
@@ -61,36 +71,91 @@
   const downloadBtn = document.getElementById("download");
   const themeToggle = document.getElementById("theme-toggle");
 
+  const templateBtns = document.querySelectorAll(".template-btn");
+  let currentTemplate = "classic";
+
+  templateBtns.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      templateBtns.forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
+      currentTemplate = e.target.dataset.template;
+    });
+  });
+
+  let qrCodeStyling = null;
+
   generateBtn.addEventListener("click", () => {
     const text = input.value.trim();
     if (!text) return alert("Please enter text or URL");
 
     qrContainer.innerHTML = "";
 
-    // Create a canvas and append it
-    const canvas = document.createElement("canvas");
-    qrContainer.appendChild(canvas);
+    const size = parseInt(sizeInput.value);
+    const color = colorInput.value;
+    const bg = bgInput.value;
 
-    // Generate QR with colors
-    QRCode.toCanvas(canvas, text, {
-      width: parseInt(sizeInput.value),
-      color: {
-        dark: colorInput.value,   // foreground color
-        light: bgInput.value      // background color
-      }
-    }, (err) => {
-      if (err) return console.error(err);
-      downloadBtn.disabled = false;
+    let dotsOptions = { color: color, type: "square" };
+    let cornersSquareOptions = { color: color, type: "square" };
+    let cornersDotOptions = { color: color, type: "square" };
+
+    if (currentTemplate === "rounded") {
+      dotsOptions.type = "rounded";
+      cornersSquareOptions.type = "extra-rounded";
+      cornersDotOptions.type = "dot";
+    } else if (currentTemplate === "dots") {
+      dotsOptions.type = "dots";
+      cornersSquareOptions.type = "dot";
+      cornersDotOptions.type = "dot";
+    } else if (currentTemplate === "classy") {
+      dotsOptions.type = "classy";
+      cornersSquareOptions.type = "extra-rounded";
+      cornersDotOptions.type = "square";
+    }
+
+    qrCodeStyling = new QRCodeStyling({
+      width: size,
+      height: size,
+      type: "svg",
+      data: text,
+      margin: 10,
+      qrOptions: {
+        typeNumber: 0,
+        mode: "Byte",
+        errorCorrectionLevel: "Q"
+      },
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.4,
+        margin: 0
+      },
+      dotsOptions: dotsOptions,
+      backgroundOptions: {
+        color: bg,
+      },
+      cornersSquareOptions: cornersSquareOptions,
+      cornersDotOptions: cornersDotOptions
     });
+
+    qrCodeStyling.append(qrContainer);
+    downloadBtn.disabled = false;
   });
 
-  downloadBtn.addEventListener("click", () => {
-    const canvas = qrContainer.querySelector("canvas");
-    if (!canvas) return;
-    const link = document.createElement("a");
-    link.download = "qr-code.png";
-    link.href = canvas.toDataURL();
-    link.click();
+  downloadBtn.addEventListener("click", async () => {
+    if (!qrCodeStyling) return;
+    try {
+      const blob = await qrCodeStyling.getRawData("png");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = "qr-code.png";
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      console.error(err);
+      qrCodeStyling.download({ name: "qr-code", extension: "png" });
+    }
   });
 
   themeToggle.addEventListener("click", () => {

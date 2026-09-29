@@ -203,3 +203,45 @@ footer.app-footer {
     width: 100%;
   }
 }
+
+/* Template Selector */
+.templates-section {
+  margin-bottom: 1rem;
+}
+.templates-section label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.template-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.template-btn {
+  background: var(--elev-1);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  box-shadow: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
+}
+.template-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 10px rgba(6, 148, 148, 0.3);
+}
+.template-btn:hover:not(.active) {
+  background: var(--elev-2);
+  border-color: var(--accent);
+  box-shadow: none;
+  color: var(--text);
+}
+[data-theme="dark"] .template-btn.active {
+  box-shadow: 0 4px 10px rgba(211, 175, 55, 0.3);
+}
